@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIPENDA - Yayasan Karya Murni Ruteng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Header Yayasan -->
+    <header class="flex flex-col md:flex-row items-center justify-between border-b border-zinc-800 pb-6 mb-8 gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-2xl text-white shadow-lg shadow-indigo-500/20">
+          YKM
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">YAYASAN KARYA MURNI RUTENG</h1>
+          <p class="text-xs md:text-sm text-zinc-400">Sistem Informasi Pendataan Anak Berkebutuhan Khusus - Google Apps Script Portal</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="loadData()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-2 transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Refresh Data
+        </button>
+      </div>
+    </header>
+
+    <!-- Info Status Sheet -->
+    <div class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 mb-8 backdrop-blur">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Terhubung Langsung ke Spreadsheet Aktif
+          </span>
+          <p class="text-sm text-zinc-300">Data tersimpan di sheet: <code class="text-indigo-400 font-mono bg-zinc-950 px-2 py-0.5 rounded">Data_Anak_YKM</code></p>
+        </div>
+        <div id="statTotal" class="text-right">
+          <div class="text-3xl font-extrabold text-white">...</div>
+          <div class="text-xs text-zinc-400">Total Anak Terdata</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+      <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-white">Daftar Anak Terdata</h2>
+        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari nama, NIK, disabilitas..." class="bg-zinc-950 border border-zinc-800 text-xs px-3 py-2 rounded-xl text-zinc-200 focus:outline-none focus:border-indigo-500 w-64">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-zinc-300" id="anakTable">
+          <thead class="bg-zinc-950/80 text-zinc-400 uppercase tracking-wider border-b border-zinc-800 text-[10px]">
+            <tr>
+              <th class="p-3">Nama Lengkap</th>
+              <th class="p-3">L/P</th>
+              <th class="p-3">Usia</th>
+              <th class="p-3">Disabilitas</th>
+              <th class="p-3">Sekolah/Pendidikan</th>
+              <th class="p-3">Desil</th>
+              <th class="p-3">Status KPD</th>
+              <th class="p-3">Alamat</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-zinc-800/60">
+            <tr>
+              <td colspan="8" class="text-center p-8 text-zinc-500">Memuat data dari Google Sheet...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var globalData = [];
+    function loadData() {
+      var body = document.getElementById('tableBody');
+      body.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-zinc-500 animate-pulse">Memuat data terbaru...</td></tr>';
+      
+      google.script.run
+        .withSuccessHandler(function(data) {
+          globalData = data || [];
+          document.querySelector('#statTotal .text-3xl').innerText = globalData.length;
+          renderTable(globalData);
+        })
+        .withFailureHandler(function(err) {
+          body.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-rose-400">Gagal memuat: ' + err.toString() + '</td></tr>';
+        })
+        .getAllRecords();
+    }
+
+    function renderTable(items) {
+      var body = document.getElementById('tableBody');
+      if (!items || items.length === 0) {
+        body.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-zinc-500">Belum ada data anak di Google Sheet.</td></tr>';
+        return;
+      }
+      var html = '';
+      items.forEach(function(item) {
+        html += '<tr class="hover:bg-zinc-800/40 transition">';
+        html += '<td class="p-3 font-semibold text-white">' + (item.nama || '-') + '<br><span class="text-[10px] text-zinc-500 font-normal">NIK: ' + (item.nik || '-') + '</span></td>';
+        html += '<td class="p-3">' + (item.jenisKelamin === 'Laki-laki' ? '<span class="text-sky-400">L</span>' : '<span class="text-rose-400">P</span>') + '</td>';
+        html += '<td class="p-3 font-mono text-zinc-300">' + (item.usia || '-') + '</td>';
+        html += '<td class="p-3"><span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20">' + (item.jenisDisabilitas || '-') + '</span></td>';
+        html += '<td class="p-3">' + (item.namaSekolah || item.jenjangPendidikan || '-') + '</td>';
+        html += '<td class="p-3"><span class="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300">' + (item.desil || '-') + '</span></td>';
+        html += '<td class="p-3">' + (item.statusKpd || '-') + '</td>';
+        html += '<td class="p-3 text-zinc-400 truncate max-w-xs">' + (item.alamatLengkap || (item.desaKelurahan + ', ' + item.kecamatan)) + '</td>';
+        html += '</tr>';
+      });
+      body.innerHTML = html;
+    }
+
+    function filterTable() {
+      var query = document.getElementById('searchInput').value.toLowerCase();
+      var filtered = globalData.filter(function(item) {
+        return (item.nama && item.nama.toLowerCase().includes(query)) ||
+               (item.nik && item.nik.toLowerCase().includes(query)) ||
+               (item.jenisDisabilitas && item.jenisDisabilitas.toLowerCase().includes(query));
+      });
+      renderTable(filtered);
+    }
+
+    window.onload = function() {
+      loadData();
+    };
+  </script>
+</body>
+</html>

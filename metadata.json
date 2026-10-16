@@ -1,0 +1,6 @@
+{
+  "name": "SIPENDA-YKM: Pendataan Anak Yayasan Karya Murni Ruteng",
+  "description": "Sistem Informasi Pendataan Anak Yayasan Karya Murni Ruteng terintegrasi Google Sheets dengan manajemen pengguna, kartu anak siap cetak, filter multi-kategori, dan analitik lengkap.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
